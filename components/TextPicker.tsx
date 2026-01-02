@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { TextItem, Category, DifficultyLevel, Language } from '../types';
 import { CATEGORY_ICONS } from '../constants';
 import { TRANSLATIONS } from '../translations';
-import { PlusCircle, Search, Clock, Zap, ArrowBigUp, ArrowBigDown, Filter, SortAsc } from 'lucide-react';
+import { PlusCircle, Search, Clock, Zap, ArrowBigUp, ArrowBigDown, Filter, SortAsc, Heart } from 'lucide-react';
 import { AdBanner } from './AdBanner';
 
 interface TextPickerProps {
@@ -13,12 +13,14 @@ interface TextPickerProps {
   isDarkMode?: boolean;
   language: Language;
   isPremium?: boolean;
+  favorites?: string[];
+  onToggleFavorite?: (id: string) => void;
 }
 
 type SortOption = 'popularity' | 'title' | 'difficulty';
 
-export const TextPicker: React.FC<TextPickerProps> = ({ onSelect, onVote, texts, isDarkMode, language, isPremium = false }) => {
-  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+export const TextPicker: React.FC<TextPickerProps> = ({ onSelect, onVote, texts, isDarkMode, language, isPremium = false, favorites = [], onToggleFavorite }) => {
+  const [activeCategory, setActiveCategory] = useState<Category | 'all' | 'favorites'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
   const [sortOption, setSortOption] = useState<SortOption>('popularity');
@@ -29,9 +31,12 @@ export const TextPicker: React.FC<TextPickerProps> = ({ onSelect, onVote, texts,
 
   const processedTexts = useMemo(() => {
     let result = [...texts];
-    if (activeCategory !== 'all') {
+    if (activeCategory === 'favorites') {
+      result = result.filter(t => favorites.includes(t.id));
+    } else if (activeCategory !== 'all') {
       result = result.filter(t => t.category === activeCategory);
     }
+
     if (difficultyFilter !== 'all') {
       result = result.filter(t => t.difficulty === difficultyFilter);
     }
@@ -50,7 +55,7 @@ export const TextPicker: React.FC<TextPickerProps> = ({ onSelect, onVote, texts,
       return 0;
     });
     return result;
-  }, [texts, activeCategory, difficultyFilter, searchQuery, sortOption]);
+  }, [texts, activeCategory, difficultyFilter, searchQuery, sortOption, favorites]);
 
   const handleCustomSubmit = () => {
     if (customText.trim().length < 50) {
@@ -90,11 +95,18 @@ export const TextPicker: React.FC<TextPickerProps> = ({ onSelect, onVote, texts,
                 icon={<Search size={16} />} 
                 isDarkMode={isDarkMode}
             />
+            <CategoryTab 
+                label={t.favorites} 
+                active={activeCategory === 'favorites'} 
+                onClick={() => setActiveCategory('favorites')} 
+                icon={<Heart size={16} />} 
+                isDarkMode={isDarkMode}
+            />
             {Object.entries(CATEGORY_ICONS).map(([cat, icon]) => (
                 <CategoryTab 
                 key={cat}
                 label={cat} 
-                active={activeCategory === cat} 
+                active={activeCategory === (cat as Category)} 
                 onClick={() => setActiveCategory(cat as Category)} 
                 icon={icon} 
                 isDarkMode={isDarkMode}
@@ -169,59 +181,65 @@ export const TextPicker: React.FC<TextPickerProps> = ({ onSelect, onVote, texts,
             </div>
         </div>
 
-        {processedTexts.map((text, idx) => (
-          <React.Fragment key={text.id}>
-            {idx > 0 && idx % 6 === 0 && !isPremium && (
-               <div className="sm:col-span-2 lg:col-span-1">
-                 <AdBanner isDarkMode={!!isDarkMode} type="card" language={language} />
-               </div>
-            )}
-            <div 
-              className={`group relative flex flex-col p-6 md:p-8 rounded-[32px] md:rounded-[40px] border transition-all active:scale-[0.98] ${
-                  isDarkMode 
-                    ? 'bg-slate-900 border-slate-800 hover:border-indigo-500' 
-                    : 'bg-white border-slate-100 shadow-sm hover:border-indigo-200'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-6 md:mb-8">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className={`p-2.5 md:p-3 rounded-xl md:rounded-2xl ${isDarkMode ? 'bg-slate-800 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
-                        {CATEGORY_ICONS[text.category]}
-                    </div>
-                    <div className={`flex items-center rounded-xl p-1 px-2 gap-1.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); onVote(text.id, 'up'); }}
-                        className={`transition-colors p-0.5 ${text.userVote === 'up' ? 'text-indigo-500' : 'text-slate-400'}`}
-                      >
-                        <ArrowBigUp size={18} fill={text.userVote === 'up' ? 'currentColor' : 'none'} />
-                      </button>
-                      <span className={`text-[10px] font-black min-w-[14px] text-center ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>
-                        {text.votes || 0}
-                      </span>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); onVote(text.id, 'down'); }}
-                        className={`transition-colors p-0.5 ${text.userVote === 'down' ? 'text-rose-500' : 'text-slate-400'}`}
-                      >
-                        <ArrowBigDown size={18} fill={text.userVote === 'down' ? 'currentColor' : 'none'} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5 md:gap-2">
-                    <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2.5 md:py-1 rounded-full border ${getDifficultyStyles(text.difficulty, isDarkMode)}`}>
-                          {text.difficulty}
-                      </span>
-                      <div className="flex items-center gap-1 text-slate-400 text-[8px] md:text-[10px] font-black">
-                        <Clock size={10} /> {text.length === 'short' ? '2m' : text.length === 'medium' ? '5m' : '10m'}
+        {processedTexts.map((text, idx) => {
+          const isFav = favorites.includes(text.id);
+          return (
+            <React.Fragment key={text.id}>
+              {idx > 0 && idx % 6 === 0 && !isPremium && (
+                 <div className="sm:col-span-2 lg:col-span-1">
+                   <AdBanner isDarkMode={!!isDarkMode} type="card" language={language} />
+                 </div>
+              )}
+              <div 
+                className={`group relative flex flex-col p-6 md:p-8 rounded-[32px] md:rounded-[40px] border transition-all active:scale-[0.98] ${
+                    isDarkMode 
+                      ? 'bg-slate-900 border-slate-800 hover:border-indigo-500' 
+                      : 'bg-white border-slate-100 shadow-sm hover:border-indigo-200'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-6 md:mb-8">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className={`p-2.5 md:p-3 rounded-xl md:rounded-2xl ${isDarkMode ? 'bg-slate-800 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                          {CATEGORY_ICONS[text.category]}
                       </div>
-                  </div>
+                      <div className={`flex items-center rounded-xl p-1 px-2 gap-1.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onVote(text.id, 'up'); }}
+                          className={`transition-colors p-0.5 ${text.userVote === 'up' ? 'text-indigo-500' : 'text-slate-400'}`}
+                        >
+                          <ArrowBigUp size={18} fill={text.userVote === 'up' ? 'currentColor' : 'none'} />
+                        </button>
+                        <span className={`text-[10px] font-black min-w-[14px] text-center ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>
+                          {text.votes || 0}
+                        </span>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onVote(text.id, 'down'); }}
+                          className={`transition-colors p-0.5 ${text.userVote === 'down' ? 'text-rose-500' : 'text-slate-400'}`}
+                        >
+                          <ArrowBigDown size={18} fill={text.userVote === 'down' ? 'currentColor' : 'none'} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 md:gap-2">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(text.id); }}
+                            className={`p-2 rounded-xl transition-all active:scale-125 ${isFav ? 'text-rose-500 bg-rose-500/10' : 'text-slate-400 hover:bg-slate-500/10'}`}
+                        >
+                            <Heart size={18} fill={isFav ? 'currentColor' : 'none'} />
+                        </button>
+                        <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2.5 md:py-1 rounded-full border ${getDifficultyStyles(text.difficulty, isDarkMode)}`}>
+                            {text.difficulty}
+                        </span>
+                    </div>
+                </div>
+                <div className="mt-auto cursor-pointer" onClick={() => onSelect(text)}>
+                  <h3 className={`text-lg md:text-xl font-black mb-1.5 leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{text.title}</h3>
+                  <p className={`text-xs md:text-sm line-clamp-3 leading-relaxed font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{text.content}</p>
+                </div>
               </div>
-              <div className="mt-auto cursor-pointer" onClick={() => onSelect(text)}>
-                <h3 className={`text-lg md:text-xl font-black mb-1.5 leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{text.title}</h3>
-                <p className={`text-xs md:text-sm line-clamp-3 leading-relaxed font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{text.content}</p>
-              </div>
-            </div>
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {isAdding && (

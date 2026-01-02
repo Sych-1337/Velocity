@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { UserStats, Language, ReadingSession } from '../types';
 import { ACHIEVEMENTS_DATA, CATEGORY_ICONS, ICON_MAP, GLOBAL_LEADERS } from '../constants';
 import { TRANSLATIONS } from '../translations';
-import { Award, Zap, Target, BookOpen, Flame, Star, TrendingUp, BarChart3, Calendar, Crown, Copy, Check, Pencil, Camera, X, Trash2, Users } from 'lucide-react';
+import { Award, Zap, Target, BookOpen, Flame, Star, TrendingUp, BarChart3, Calendar, Crown, Copy, Check, Pencil, Camera, X, Trash2, Users, ChevronRight, Plus } from 'lucide-react';
 
 interface ProfileProps {
   stats: UserStats;
@@ -69,24 +69,27 @@ export const Profile: React.FC<ProfileProps> = ({ stats, user, isDarkMode, langu
   return (
     <div className={`p-4 md:p-10 pb-32 space-y-8 animate-in fade-in duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
       
+      {/* Premium Upgrade Section */}
       {!stats.isPremium && (
         <button 
           onClick={onOpenPremium}
-          className="w-full relative overflow-hidden p-6 rounded-[32px] bg-gradient-to-r from-amber-400 to-orange-600 flex items-center justify-between text-white shadow-xl shadow-amber-500/20 transform hover:scale-[1.01] active:scale-[0.98] transition-all"
+          className="w-full relative overflow-hidden p-6 rounded-[32px] bg-gradient-to-r from-amber-400 to-orange-600 flex items-center justify-between text-white shadow-xl shadow-amber-500/20 transform hover:scale-[1.01] active:scale-[0.98] transition-all group"
         >
-          <div className="flex items-center gap-4">
+          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-4 relative z-10">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-              <Crown size={24} fill="currentColor" />
+              <Crown size={24} fill="currentColor" className="animate-pulse" />
             </div>
             <div className="text-left">
-              <h4 className="text-lg font-black italic tracking-tighter uppercase">{t.goPremium}</h4>
+              <h4 className="text-lg font-black italic tracking-tighter uppercase leading-none mb-1">{t.goPremium}</h4>
               <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">{t.premiumSubtitle}</p>
             </div>
           </div>
-          <Zap size={24} className="opacity-40" />
+          <Zap size={24} className="opacity-40 animate-lightning" />
         </button>
       )}
 
+      {/* Hero Section */}
       <div className={`relative overflow-hidden p-6 md:p-12 rounded-[40px] flex flex-col md:flex-row items-center gap-6 md:gap-8 ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white shadow-xl shadow-slate-200/50'}`}>
         <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
           <Star size={120} fill="currentColor" />
@@ -125,9 +128,6 @@ export const Profile: React.FC<ProfileProps> = ({ stats, user, isDarkMode, langu
                   <button onClick={handleSaveName} className="p-3 bg-indigo-600 text-white rounded-xl">
                     <Check size={20} />
                   </button>
-                  <button onClick={() => setIsEditingName(false)} className="p-3 bg-slate-800 text-slate-400 rounded-xl">
-                    <X size={20} />
-                  </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
@@ -149,7 +149,13 @@ export const Profile: React.FC<ProfileProps> = ({ stats, user, isDarkMode, langu
               </div>
             </div>
 
-            <p className="text-indigo-500 font-black text-sm md:text-lg tracking-[0.2em] uppercase">{stats.level}</p>
+            <div className="flex items-center justify-center md:justify-start gap-2">
+                <p className="text-indigo-500 font-black text-sm md:text-lg tracking-[0.2em] uppercase">{stats.level}</p>
+                <div className="flex items-center gap-1 text-amber-500 animate-lightning">
+                    <Zap size={18} fill="currentColor" />
+                    <span className="text-xs font-black">LVL {stats.accountLevel}</span>
+                </div>
+            </div>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6">
                 <div className="flex items-center gap-2">
@@ -164,56 +170,93 @@ export const Profile: React.FC<ProfileProps> = ({ stats, user, isDarkMode, langu
         </div>
       </div>
 
-      <div className="space-y-6">
+      {/* Achievements Horizontal Section */}
+      <div className="space-y-4">
         <div className="flex justify-between items-center px-2">
-            <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter underline decoration-indigo-500 decoration-4 underline-offset-4">
-              {t.mySquad} <span className="text-sm opacity-40 ml-2 font-black">{friends.length} {t.totalFriends}</span>
-            </h3>
+          <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">{t.hallOfFame}</h3>
+          <button 
+            onClick={onOpenGallery}
+            className="flex items-center gap-1 text-indigo-500 text-[10px] font-black uppercase tracking-widest hover:underline"
+          >
+            {t.alphabetical} <ChevronRight size={14} />
+          </button>
         </div>
-        
-        {friends.length === 0 ? (
-          <div className={`p-8 rounded-[32px] border-2 border-dashed text-center flex flex-col items-center gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/40 text-slate-500' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
-            <Users size={32} className="opacity-20" />
-            <p className="text-[10px] font-black uppercase tracking-widest">{t.noConnections}</p>
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2">
+          {unlockedAchievements.slice(0, 6).map(medal => {
+            const IconComp = ICON_MAP[medal.icon] || Award;
+            return (
+              <div 
+                key={medal.id}
+                onClick={onOpenGallery}
+                className={`flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-[32px] flex items-center justify-center border-2 transition-transform hover:scale-105 active:scale-95 cursor-pointer relative overflow-hidden ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-lg shadow-slate-200/50'
+                }`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent" />
+                <div className="flex flex-col items-center gap-2 relative z-10">
+                    <IconComp size={28} className="text-indigo-500" fill={isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'none'} />
+                    <span className="text-[7px] font-black uppercase text-center px-2 line-clamp-1">{medal.title}</span>
+                </div>
+              </div>
+            );
+          })}
+          <div 
+            onClick={onOpenGallery}
+            className={`flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-[32px] border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer ${
+              isDarkMode ? 'border-slate-800 text-slate-600' : 'border-slate-200 text-slate-400'
+            }`}
+          >
+            <Plus size={20} />
+            <span className="text-[8px] font-black uppercase tracking-widest text-center">{t.alphabetical}</span>
           </div>
-        ) : (
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2">
+        </div>
+      </div>
+
+      {/* Neural Squad Section (Friends) */}
+      <div className="space-y-4">
+          <div className="flex justify-between items-center px-2">
+            <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">{t.mySquad}</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{friends.length} {t.totalFriends}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-2">
             {friends.map(friend => (
               <div 
                 key={friend.id}
-                className={`flex-shrink-0 w-48 p-5 rounded-[32px] border-2 transition-all hover:scale-105 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-lg'}`}
+                className={`p-4 rounded-[28px] border-2 flex items-center gap-4 group relative ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
+                }`}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white font-black">
-                    {friend.avatar}
-                  </div>
-                  <button 
-                    onClick={() => onRemoveFriend(friend.code)}
-                    className="p-1.5 hover:text-rose-500 transition-colors opacity-40 hover:opacity-100"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 ${
+                  isDarkMode ? 'bg-slate-800 text-indigo-400' : 'bg-indigo-50 text-indigo-600'
+                }`}>
+                  {friend.avatar}
                 </div>
-                <div className="space-y-1">
-                  <p className="font-black text-sm truncate">{friend.name}</p>
-                  <p className="text-[8px] font-black uppercase text-indigo-500 tracking-widest">LVL {friend.level}</p>
-                </div>
-                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
-                  <div className="text-center flex-1 border-r border-white/5">
-                    <p className="text-[9px] font-black uppercase text-slate-500">{t.wpm}</p>
-                    <p className="font-black text-xs">{friend.wpm}</p>
-                  </div>
-                  <div className="text-center flex-1">
-                    <p className="text-[9px] font-black uppercase text-slate-500">XP</p>
-                    <p className="font-black text-xs">{(friend.points / 1000).toFixed(1)}k</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className={`font-black text-sm truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{friend.name}</h4>
+                  <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-slate-500">
+                    <Zap size={10} className="text-amber-500" fill="currentColor" /> LVL {friend.level}
                   </div>
                 </div>
+                <button 
+                  onClick={() => onRemoveFriend(friend.code)}
+                  className="p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500/10 text-rose-500 rounded-xl"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             ))}
+            {friends.length === 0 && (
+              <div className={`col-span-full p-8 rounded-[28px] border-2 border-dashed flex flex-col items-center justify-center text-center space-y-2 ${
+                isDarkMode ? 'border-slate-800 text-slate-600' : 'border-slate-200 text-slate-400'
+              }`}>
+                <Users size={32} strokeWidth={1.5} />
+                <p className="text-[10px] font-black uppercase tracking-widest">{t.noConnections}</p>
+              </div>
+            )}
           </div>
-        )}
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard icon={<Zap size={20} />} label="Best Speed" value={stats.bestWpm.toString() + ' ' + t.wpm} color="text-yellow-500" isDarkMode={isDarkMode} />
         <StatCard icon={<Target size={20} />} label={t.accuracy} value={`${stats.comprehensionRate}%`} color="text-emerald-500" isDarkMode={isDarkMode} />
@@ -221,6 +264,7 @@ export const Profile: React.FC<ProfileProps> = ({ stats, user, isDarkMode, langu
         <StatCard icon={<Award size={20} />} label="Rank" value="#12" color="text-rose-500" isDarkMode={isDarkMode} />
       </div>
 
+      {/* Charts & Mastery */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         <div className={`p-6 md:p-8 rounded-[40px] border space-y-4 md:space-y-6 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
           <div className="flex items-center justify-between">
@@ -251,23 +295,11 @@ export const Profile: React.FC<ProfileProps> = ({ stats, user, isDarkMode, langu
                       <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 truncate">{cat}</p>
                       <p className="text-base md:text-lg font-black">{avgAccuracy}%</p>
                     </div>
-                    <div className="w-10 md:w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shrink-0">
-                       <div className="h-full bg-indigo-500" style={{ width: `${avgAccuracy}%` }} />
-                    </div>
                  </div>
                );
             })}
           </div>
         </div>
-      </div>
-
-      <div className={`p-6 md:p-8 rounded-[40px] border space-y-4 md:space-y-6 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-base md:text-xl font-black italic uppercase tracking-tighter flex items-center gap-2">
-              <Calendar size={18} className="text-indigo-500" /> {t.statsConsistency}
-            </h3>
-          </div>
-          <ConsistencyHeatmap history={history} isDarkMode={isDarkMode} />
       </div>
     </div>
   );
@@ -315,30 +347,5 @@ const LineChart = ({ data, isDarkMode }: { data: number[], isDarkMode: boolean }
         return <circle key={i} cx={x} cy={y} r="6" fill="#6366f1" className="drop-shadow-sm" />;
       })}
     </svg>
-  );
-};
-
-const ConsistencyHeatmap = ({ history, isDarkMode }: { history: ReadingSession[], isDarkMode: boolean }) => {
-  const days = Array.from({ length: 28 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (27 - i));
-    const dayStr = date.toISOString().split('T')[0];
-    const sessions = history.filter(h => new Date(h.timestamp).toISOString().split('T')[0] === dayStr);
-    return sessions.length;
-  });
-  return (
-    <div className="flex flex-wrap gap-2 justify-center sm:justify-between">
-      {days.map((count, i) => (
-        <div 
-          key={i}
-          className={`w-4 h-4 rounded-sm sm:w-6 sm:h-6 sm:rounded-md transition-all duration-300 ${
-            count > 0 
-              ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] scale-110' 
-              : isDarkMode ? 'bg-slate-800' : 'bg-slate-100'
-          }`}
-          title={`${count} Sessions`}
-        />
-      ))}
-    </div>
   );
 };

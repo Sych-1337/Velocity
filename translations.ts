@@ -128,7 +128,11 @@ export const TRANSLATIONS: Record<Language, any> = {
     privacyLocal: 'Offline Local Only',
     cantAddSelf: "Can't add yourself",
     idCodeInvalid: "Code must be 5 digits",
-    data: 'DATA'
+    data: 'DATA',
+    premiumSuccessTitle: 'EVOLUTION COMPLETE',
+    premiumSuccessSub: 'You are now a Velocity Master.',
+    startEvolution: 'START EVOLUTION',
+    favorites: 'Favorites'
   },
   ru: {
     appName: 'VELOCITY',
@@ -159,7 +163,7 @@ export const TRANSLATIONS: Record<Language, any> = {
     hallOfFame: 'Зал славы',
     personalLegacy: 'Ваше личное наследие',
     victory: 'ПОБЕДА!',
-    continueTraining: 'ПРОДОЛЖИТЬ ТРЕНИРОВКУ',
+    continueTraining: 'ПРОДОВЖИТЬ ТРЕНИРОВКУ',
     aiInsight: 'Системная подготовка',
     initiateReading: 'НАЧАТЬ ЧТЕНИЕ',
     abort: 'ОТМЕНА',
@@ -256,7 +260,11 @@ export const TRANSLATIONS: Record<Language, any> = {
     privacyLocal: 'Оффлайн: Только локально',
     cantAddSelf: "Нельзя добавить самого себя",
     idCodeInvalid: "Код должен быть 5-значным",
-    data: 'ДАННЫЕ'
+    data: 'ДАННЫЕ',
+    premiumSuccessTitle: 'ЭВОЛЮЦИЯ ЗАВЕРШЕНА',
+    premiumSuccessSub: 'Теперь вы — Velocity Master.',
+    startEvolution: 'НАЧАТЬ ЭВОЛЮЦИЮ',
+    favorites: 'Избранное'
   },
   es: {
     appName: 'VELOCITY',
@@ -313,7 +321,7 @@ export const TRANSLATIONS: Record<Language, any> = {
     myBooksTab: 'Mis Libros',
     shareKnowledge: 'COMPARTIR CONOCIMIENTO',
     communityHubTitle: 'CENTRO COMUNITARIO',
-    communityHubDesc: 'Explora y califica módulos de entrenamiento.',
+    communityHubDesc: 'Explore y califique módulos de entrenamiento.',
     startTraining: 'Iniciar Entrenamiento',
     publishData: 'PUBLICAR DATOS',
     protocolTitle: 'Título del Protocolo',
@@ -384,7 +392,11 @@ export const TRANSLATIONS: Record<Language, any> = {
     privacyLocal: 'Offline: Solo local',
     cantAddSelf: "No puedes añadirte a ti mismo",
     idCodeInvalid: "El código debe ser de 5 dígitos",
-    data: 'DATOS'
+    data: 'DATOS',
+    premiumSuccessTitle: 'EVOLUCIÓN COMPLETADA',
+    premiumSuccessSub: 'Ahora eres un Velocity Master.',
+    startEvolution: 'INICIAR EVOLUCIÓN',
+    favorites: 'Favoritos'
   },
   uk: {
     appName: 'VELOCITY',
@@ -415,7 +427,7 @@ export const TRANSLATIONS: Record<Language, any> = {
     hallOfFame: 'Зал слави',
     personalLegacy: 'Ваша особиста спадщина',
     victory: 'ПЕРЕМОГА!',
-    continueTraining: 'ПРОДОВЖИТИ ТРЕНУВАННЯ',
+    continueTraining: 'ПРОДОВЖИТІ ТРЕНУВАННЯ',
     aiInsight: 'Системна підготовка',
     initiateReading: 'ПОЧАТИ ЧИТАННЯ',
     abort: 'ВІДМІНА',
@@ -466,7 +478,7 @@ export const TRANSLATIONS: Record<Language, any> = {
     idCodeLabel: '5-значний код підключення',
     userNotFound: 'Користувача не знайдено',
     signInApple: 'Увійти через Apple',
-    continueGoogle: 'Продолжить с Google',
+    continueGoogle: 'Продовжити з Google',
     terms: 'Продовжуючи, ви приймаєте умови використання нейромережі.',
     finishProtocol: 'Завершити Протокол',
     legacyComplete: 'СПАДЩИНА ЗАВЕРШЕНА',
@@ -490,7 +502,7 @@ export const TRANSLATIONS: Record<Language, any> = {
     hardestFirst: 'Спочатку складні',
     lockedControls: 'Керування заблоковано: Пауза та зміна швидкості недоступні.',
     riskReward: 'Ризик та Нагорода: x1.5 Досвіду за успіх, але -25 XP за скидання.',
-    bypassWarning: 'Більше не показувати це попередження',
+    bypassWarning: 'Больше не показувати це попередження',
     activateProtocol: 'АКТИВУВАТИ ПРОТОКОЛ',
     sponsored: 'Реклама',
     install: 'ВСТАНОВИТИ',
@@ -510,8 +522,12 @@ export const TRANSLATIONS: Record<Language, any> = {
     notifiedFirst: 'ВИ ДІЗНАЄТЕСЬ ПЕРШИМ',
     supportsFiles: 'Підтримка PDF, TXT, MOBI',
     privacyLocal: 'Оффлайн: Тільки локально',
-    cantAddSelf: "Не можна додати самого себе",
+    cantAddSelf: "Не можна додати самого себя",
     idCodeInvalid: "Код має бути 5-значним",
-    data: 'ДАНІ'
+    data: 'ДАНІ',
+    premiumSuccessTitle: 'ЕВOЛЮЦІЯ ЗАВЕРШЕНА',
+    premiumSuccessSub: 'Тепер ви — Velocity Master.',
+    startEvolution: 'ПОЧАТИ ЕВОЛЮЦІЮ',
+    favorites: 'Обране'
   }
 };

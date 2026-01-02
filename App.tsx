@@ -18,7 +18,7 @@ import { ACHIEVEMENTS_DATA } from './constants';
 import { PRACTICE_TEXTS } from './data/practiceTexts';
 import { TRANSLATIONS } from './translations';
 import { summarizeText } from './services/geminiService';
-import { Sparkles, Loader2, BookOpen, Layers, ShieldAlert, TrendingDown, Cpu, Shield } from 'lucide-react';
+import { Shield, Crown, Zap, CheckCircle, Sparkles, Star, Rocket, Brain } from 'lucide-react';
 
 type AppScreen = 'home' | 'reader' | 'quiz' | 'results' | 'profile' | 'leaderboard' | 'settings' | 'community' | 'achievements' | 'premium';
 
@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [homeTab, setHomeTab] = useState<'protocols' | 'books'>('protocols');
   const [selectedText, setSelectedText] = useState<TextItem | null>(null);
   const [prepSummary, setPrepSummary] = useState<string | null>(null);
+  const [showPremiumSuccess, setShowPremiumSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastSession, setLastSession] = useState<ReadingSession | null>(null);
   const [wpm, setWpm] = useState(250);
@@ -41,8 +42,28 @@ const App: React.FC = () => {
   
   const t = TRANSLATIONS[language];
 
-  const [libraryTexts, setLibraryTexts] = useState<TextItem[]>([]);
-  const [communityTexts, setCommunityTexts] = useState<TextItem[]>([]);
+  const [libraryTexts, setLibraryTexts] = useState<TextItem[]>(() => {
+    const saved = localStorage.getItem('libraryTexts');
+    return saved ? JSON.parse(saved) : PRACTICE_TEXTS;
+  });
+
+  const [communityTexts, setCommunityTexts] = useState<TextItem[]>(() => {
+    const saved = localStorage.getItem('communityTexts');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'c1',
+        title: 'The Future of Neural Networks',
+        category: 'community',
+        difficulty: 'Elite',
+        length: 'long',
+        content: "Neural networks have evolved from simple perceptrons to complex transformers capable of emergent reasoning. The bottleneck is no longer compute, but our ability to curate high-quality synthetic data for recursive improvement.",
+        author: 'CyberPunk99',
+        votes: 142,
+        userVote: null,
+        language: 'en'
+      }
+    ];
+  });
 
   const [userStats, setUserStats] = useState<UserStats>(() => {
     const saved = localStorage.getItem('userStats');
@@ -50,6 +71,7 @@ const App: React.FC = () => {
       const parsed = JSON.parse(saved);
       if (parsed.isStrictMode === undefined) parsed.isStrictMode = false;
       if (parsed.hasSeenStrictModeWarning === undefined) parsed.hasSeenStrictModeWarning = false;
+      if (parsed.favorites === undefined) parsed.favorites = [];
       return parsed;
     }
     return {
@@ -68,6 +90,7 @@ const App: React.FC = () => {
       hasSeenStrictModeWarning: false,
       idCode: Math.floor(10000 + Math.random() * 90000).toString(),
       friendCodes: [],
+      favorites: [],
       hasAcceptedCommunityRules: false
     };
   });
@@ -75,6 +98,14 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('userStats', JSON.stringify(userStats));
   }, [userStats]);
+
+  useEffect(() => {
+    localStorage.setItem('libraryTexts', JSON.stringify(libraryTexts));
+  }, [libraryTexts]);
+
+  useEffect(() => {
+    localStorage.setItem('communityTexts', JSON.stringify(communityTexts));
+  }, [communityTexts]);
 
   useEffect(() => {
     if (user) localStorage.setItem('user', JSON.stringify(user));
@@ -88,23 +119,6 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('language', language);
   }, [language]);
-
-  useEffect(() => {
-    setLibraryTexts(PRACTICE_TEXTS);
-    const mockCommunity: TextItem[] = [{
-        id: 'c1',
-        title: 'The Future of Neural Networks',
-        category: 'community',
-        difficulty: 'Elite',
-        length: 'long',
-        content: "Neural networks have evolved from simple perceptrons to complex transformers capable of emergent reasoning. The bottleneck is no longer compute, but our ability to curate high-quality synthetic data for recursive improvement.",
-        author: 'CyberPunk99',
-        votes: 142,
-        userVote: null,
-        language: 'en'
-    }];
-    setCommunityTexts(mockCommunity);
-  }, []);
 
   const navigate = (screen: AppScreen) => setCurrentScreen(screen);
 
@@ -128,17 +142,8 @@ const App: React.FC = () => {
     setSelectedText(text);
     setIsProcessing(true);
     const summary = await summarizeText(text.content);
-    setTimeout(() => {
-      setPrepSummary(summary);
-      setIsProcessing(false);
-    }, 600);
-  };
-
-  const handleConfirmStart = () => {
-    if (selectedText) {
-      startReading(selectedText);
-      setPrepSummary(null);
-    }
+    setPrepSummary(summary);
+    setIsProcessing(false);
   };
 
   const handleFinishedReading = (finalWpm: number) => {
@@ -158,14 +163,8 @@ const App: React.FC = () => {
     if (accuracy === undefined) return;
     if (lastSession) {
         let score = Math.round((lastSession.wpm * accuracy) / 10);
-        
-        if (userStats.isStrictMode) {
-            score = Math.round(score * 1.5);
-        }
-
-        if (isRepeatRead) {
-          score = Math.floor(score * 0.3);
-        }
+        if (userStats.isStrictMode) score = Math.round(score * 1.5);
+        if (isRepeatRead) score = Math.floor(score * 0.3);
 
         const finalSession = { ...lastSession, accuracy, score };
         setLastSession(finalSession);
@@ -197,41 +196,53 @@ const App: React.FC = () => {
     navigate('results');
   };
 
-  const handleAbortReading = () => {
-    if (userStats.isStrictMode) {
-        setUserStats(prev => ({
-            ...prev,
-            experience: Math.max(0, prev.experience - 25)
-        }));
-        alert("STRICT MODE PENALTY: -25 XP for aborting active protocol.");
-    }
-    navigate('home');
-  };
-
-  const handleUpdateUser = (updates: Partial<{ name: string; avatar: string }>) => {
-    setUser(prev => prev ? { ...prev, ...updates } : null);
-  };
-
-  const handleAddFriend = (code: string) => {
-    setUserStats(prev => ({
-      ...prev,
-      friendCodes: prev.friendCodes.includes(code) ? prev.friendCodes : [...prev.friendCodes, code]
+  const handleVoteLibrary = (id: string, direction: 'up' | 'down') => {
+    setLibraryTexts(prev => prev.map(t => {
+      if (t.id !== id) return t;
+      let v = t.votes || 0;
+      if (t.userVote === direction) v += (direction === 'up' ? -1 : 1);
+      else v += (t.userVote ? (direction === 'up' ? 2 : -2) : (direction === 'up' ? 1 : -1));
+      return { ...t, votes: v, userVote: t.userVote === direction ? null : direction };
     }));
   };
 
-  const handleRemoveFriend = (code: string) => {
-    setUserStats(prev => ({
-      ...prev,
-      friendCodes: prev.friendCodes.filter(c => c !== code)
+  const handleVoteCommunity = (id: string, direction: 'up' | 'down') => {
+    setCommunityTexts(prev => prev.map(t => {
+      if (t.id !== id) return t;
+      let v = t.votes || 0;
+      if (t.userVote === direction) v += (direction === 'up' ? -1 : 1);
+      else v += (t.userVote ? (direction === 'up' ? 2 : -2) : (direction === 'up' ? 1 : -1));
+      return { ...t, votes: v, userVote: t.userVote === direction ? null : direction };
     }));
   };
 
-  const handleToggleStrictMode = (bypassWarning: boolean) => {
-      setUserStats(prev => ({
-          ...prev,
-          isStrictMode: !prev.isStrictMode,
-          hasSeenStrictModeWarning: bypassWarning ? true : prev.hasSeenStrictModeWarning
-      }));
+  const handleToggleFavorite = (id: string) => {
+    setUserStats(prev => {
+        const isFav = prev.favorites.includes(id);
+        const newFavs = isFav ? prev.favorites.filter(fid => fid !== id) : [...prev.favorites, id];
+        return { ...prev, favorites: newFavs };
+    });
+  };
+
+  const handleAddCommunityText = (textData: Partial<TextItem>) => {
+    const newText: TextItem = {
+      id: 'c' + Date.now(),
+      title: textData.title || 'Untitled Protocol',
+      category: 'community',
+      difficulty: 'Competent',
+      length: 'medium',
+      content: textData.content || '',
+      author: user?.name || 'Anonymous',
+      votes: 0,
+      userVote: null,
+      language: language
+    };
+    setCommunityTexts(prev => [newText, ...prev]);
+  };
+
+  const handlePurchasePremium = () => {
+    setUserStats(prev => ({ ...prev, isPremium: true }));
+    setShowPremiumSuccess(true);
   };
 
   if (!user) {
@@ -257,49 +268,32 @@ const App: React.FC = () => {
             <div className="flex flex-col h-full">
               <div className="px-6 md:px-10 pt-6 md:pt-10 flex justify-between items-start">
                 <div className={`inline-flex p-1.5 rounded-[24px] ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white shadow-lg shadow-slate-200/50 border border-slate-100'}`}>
-                  <button 
-                    onClick={() => setHomeTab('protocols')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${homeTab === 'protocols' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-500 hover:text-indigo-500'}`}
-                  >
-                    <Layers size={14} /> {t.protocolsTab}
+                  <button onClick={() => setHomeTab('protocols')} className={`px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${homeTab === 'protocols' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
+                    {t.protocolsTab}
                   </button>
-                  <button 
-                    onClick={() => setHomeTab('books')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${homeTab === 'books' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-500 hover:text-indigo-500'}`}
-                  >
-                    <BookOpen size={14} /> {t.myBooksTab}
+                  <button onClick={() => setHomeTab('books')} className={`px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${homeTab === 'books' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
+                    {t.myBooksTab}
                   </button>
                 </div>
                 {userStats.isStrictMode && (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-600 text-white text-[10px] font-black uppercase animate-pulse">
-                        <Shield size={14} fill="white" /> Strict Active
-                    </div>
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-600 text-white text-[10px] font-black uppercase animate-pulse">
+                    <Shield size={14} fill="white" /> {t.strictActive}
+                  </div>
                 )}
               </div>
-
               {homeTab === 'protocols' ? (
                 <>
                   <TextPicker 
                     onSelect={handleStartReadingRequest} 
                     texts={libraryTexts} 
-                    language={language}
-                    onVote={(id, dir) => {
-                      setLibraryTexts(prev => prev.map(t => {
-                        if (t.id !== id) return t;
-                        let v = t.votes || 0;
-                        if (t.userVote === dir) v += (dir === 'up' ? -1 : 1);
-                        else v += (t.userVote ? (dir === 'up' ? 2 : -2) : (dir === 'up' ? 1 : -1));
-                        return { ...t, votes: v, userVote: t.userVote === dir ? null : dir };
-                      }));
-                    }}
+                    language={language} 
+                    onVote={handleVoteLibrary} 
                     isDarkMode={isDarkMode} 
-                    isPremium={userStats.isPremium}
+                    isPremium={userStats.isPremium} 
+                    favorites={userStats.favorites}
+                    onToggleFavorite={handleToggleFavorite}
                   />
-                  {!userStats.isPremium && (
-                    <div className="px-6 md:px-10 pb-10">
-                      <AdBanner isDarkMode={isDarkMode} />
-                    </div>
-                  )}
+                  {!userStats.isPremium && <div className="px-6 md:px-10 pb-10"><AdBanner isDarkMode={isDarkMode} language={language} /></div>}
                 </>
               ) : (
                 <Books isDarkMode={isDarkMode} language={language} />
@@ -307,113 +301,119 @@ const App: React.FC = () => {
             </div>
           )}
 
+          {currentScreen === 'community' && (
+            <Community 
+              texts={communityTexts} 
+              onSelect={handleStartReadingRequest} 
+              onVote={handleVoteCommunity} 
+              onAdd={handleAddCommunityText} 
+              isDarkMode={isDarkMode} 
+              language={language} 
+              hasAcceptedRules={userStats.hasAcceptedCommunityRules}
+              onAcceptRules={() => setUserStats(prev => ({ ...prev, hasAcceptedCommunityRules: true }))}
+            />
+          )}
+
+          {currentScreen === 'premium' && (
+            <Premium isDarkMode={isDarkMode} language={language} onBack={() => navigate('profile')} onPurchase={handlePurchasePremium} />
+          )}
+
           {currentScreen === 'reader' && selectedText && (
             <div className="fixed inset-0 z-[200]">
-              <SpeedReader 
-                text={selectedText.content} 
-                difficulty={selectedText.difficulty}
-                initialWpm={wpm} 
-                language={language}
-                accountLevel={userStats.accountLevel}
-                onFinish={handleFinishedReading}
-                onBack={handleAbortReading}
-                isStrictMode={userStats.isStrictMode}
-              />
+              <SpeedReader text={selectedText.content} difficulty={selectedText.difficulty} initialWpm={wpm} language={language} accountLevel={userStats.accountLevel} onFinish={handleFinishedReading} onBack={() => navigate('home')} isStrictMode={userStats.isStrictMode} />
             </div>
           )}
 
           {currentScreen === 'quiz' && selectedText && (
-             <div className="flex-1 flex items-center justify-center p-4">
+            <div className="flex-1 flex items-center justify-center p-4">
               <Quiz text={selectedText.content} onComplete={handleQuizComplete} isDarkMode={isDarkMode} language={language} isStrictMode={userStats.isStrictMode} />
             </div>
           )}
 
-          {currentScreen === 'results' && lastSession && (
-             <div className="flex-1 flex items-center justify-center p-6">
-                <div className={`w-full max-w-lg p-10 flex flex-col items-center text-center space-y-8 rounded-[40px] ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white shadow-xl'}`}>
-                  {userStats.isStrictMode && (
-                    <div className="bg-indigo-600 text-white px-6 py-2 rounded-full flex items-center gap-2">
-                        <Shield size={16} fill="white" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Strict Reward: x1.5 Multiplier Applied</span>
-                    </div>
-                  )}
-                  {isRepeatRead && (
-                    <div className="bg-rose-500/10 text-rose-500 px-6 py-2 rounded-full flex items-center gap-2 animate-bounce">
-                      <TrendingDown size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Debuff: Secondary Analysis (-70% XP)</span>
-                    </div>
-                  )}
-                  
-                  <h2 className="text-4xl font-black text-indigo-500 italic">{t.victory}</h2>
-                  
-                  <div className="grid grid-cols-2 gap-6 w-full">
-                      <div className={`${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-100'} p-6 rounded-3xl`}>
-                          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{t.navStats}</p>
-                          <p className="text-3xl font-black">{lastSession.wpm}<span className="text-sm ml-1 opacity-50">{t.wpm}</span></p>
-                      </div>
-                      <div className={`${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-100'} p-6 rounded-3xl`}>
-                          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{t.accuracy}</p>
-                          <p className="text-3xl font-black">{Math.round(lastSession.accuracy * 100)}<span className="text-sm ml-1 opacity-50">%</span></p>
-                      </div>
-                  </div>
+          {currentScreen === 'profile' && (
+            <Profile stats={userStats} user={user} isDarkMode={isDarkMode} language={language} onOpenGallery={() => navigate('achievements')} onOpenPremium={() => navigate('premium')} onUpdateUser={(u) => setUser(prev => prev ? {...prev, ...u} : null)} onRemoveFriend={(c) => setUserStats(prev => ({...prev, friendCodes: prev.friendCodes.filter(f => f !== c)}))} />
+          )}
 
-                  <div className="w-full flex flex-col items-center gap-2">
-                    <p className="text-xs font-black uppercase tracking-widest opacity-40">Experience Acquired</p>
-                    <p className={`text-5xl font-black ${isRepeatRead ? 'text-rose-500' : 'text-emerald-500'}`}>+{lastSession.score} XP</p>
-                  </div>
+          {currentScreen === 'leaderboard' && <Leaderboard isDarkMode={isDarkMode} language={language} userStats={userStats} onAddFriend={(c) => setUserStats(prev => ({...prev, friendCodes: [...prev.friendCodes, c]}))} />}
+          
+          {currentScreen === 'settings' && <Settings wpm={wpm} onWpmChange={setWpm} isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(!isDarkMode)} language={language} onLanguageChange={setLanguage} onLogout={() => setUser(null)} isStrictMode={userStats.isStrictMode} hasSeenWarning={userStats.hasSeenStrictModeWarning} onToggleStrictMode={(b) => setUserStats(prev => ({...prev, isStrictMode: !prev.isStrictMode, hasSeenStrictModeWarning: b ? true : prev.hasSeenStrictModeWarning}))} />}
+          
+          {currentScreen === 'achievements' && <AchievementsGallery achievements={ACHIEVEMENTS_DATA} onBack={() => navigate('profile')} isDarkMode={isDarkMode} language={language} />}
 
-                  <button 
-                      onClick={() => navigate('home')}
-                      className={`w-full py-5 rounded-3xl font-black text-xl active:scale-95 transition-all transform hover:-translate-y-1 ${isDarkMode ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}`}
-                  >
-                      {t.continueTraining}
+          {/* Premium Success Modal */}
+          {showPremiumSuccess && (
+            <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl animate-in fade-in duration-500">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-[20%] left-[20%] w-96 h-96 bg-amber-500/20 rounded-full blur-[120px] animate-pulse" />
+                    <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px] animate-pulse-delayed" />
+                </div>
+
+                <div className={`w-full max-w-xl p-8 md:p-12 rounded-[56px] border-4 relative overflow-hidden text-center space-y-10 ${isDarkMode ? 'bg-slate-900 border-amber-500/30' : 'bg-white border-amber-100 shadow-2xl'}`}>
+                    <div className="relative inline-block">
+                        <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-amber-400 to-orange-600 rounded-[38px] flex items-center justify-center text-white shadow-2xl rotate-12 animate-float">
+                            <Crown size={64} fill="currentColor" />
+                        </div>
+                        <Sparkles className="absolute -top-4 -right-4 text-amber-500 animate-spin-slow" size={32} />
+                    </div>
+
+                    <div className="space-y-4">
+                        <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase leading-none">
+                            {t.premiumSuccessTitle}
+                        </h2>
+                        <p className="text-xl font-medium opacity-60">
+                            {t.premiumSuccessSub}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                        <BenefitItem icon={<Brain size={18} />} title={t.aiAnalysis} isDarkMode={isDarkMode} />
+                        <BenefitItem icon={<Rocket size={18} />} title={t.unlimitedAccess} isDarkMode={isDarkMode} />
+                        <BenefitItem icon={<Shield size={18} />} title={t.adFree} isDarkMode={isDarkMode} />
+                        <BenefitItem icon={<Star size={18} />} title={t.customVoices} isDarkMode={isDarkMode} />
+                    </div>
+
+                    <button 
+                        onClick={() => { setShowPremiumSuccess(false); navigate('home'); }}
+                        className="w-full bg-gradient-to-r from-amber-400 to-orange-600 text-white py-6 rounded-[32px] font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-orange-500/20 flex items-center justify-center gap-3"
+                    >
+                        <Zap size={24} fill="white" /> {t.startEvolution}
+                    </button>
+                </div>
+            </div>
+          )}
+
+          {/* AI Summary Modal for Premium Users */}
+          {prepSummary && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
+              <div className={`w-full max-w-lg p-10 rounded-[48px] border-2 space-y-8 ${isDarkMode ? 'bg-slate-900 border-indigo-500/30' : 'bg-white border-indigo-100 shadow-2xl'}`}>
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-lg animate-pulse">
+                    <Shield size={40} />
+                  </div>
+                  <h3 className="text-3xl font-black italic tracking-tighter uppercase">{t.aiInsight}</h3>
+                  <div className={`p-6 rounded-[32px] text-left italic leading-relaxed ${isDarkMode ? 'bg-white/5 text-slate-300' : 'bg-indigo-50 text-indigo-900'}`}>
+                    "{prepSummary}"
+                  </div>
+                  <button onClick={() => { startReading(selectedText!); setPrepSummary(null); }} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-xl hover:bg-indigo-700 shadow-xl transition-all">
+                    {t.initiateReading}
                   </button>
                 </div>
-             </div>
+              </div>
+            </div>
           )}
-
-          {currentScreen === 'profile' && (
-            <Profile 
-              stats={userStats} 
-              user={user} 
-              isDarkMode={isDarkMode} 
-              language={language} 
-              onOpenGallery={() => navigate('achievements')} 
-              onOpenPremium={() => navigate('premium')} 
-              onUpdateUser={handleUpdateUser}
-              onRemoveFriend={handleRemoveFriend}
-            />
-          )}
-
-          {currentScreen === 'leaderboard' && (
-            <Leaderboard 
-              isDarkMode={isDarkMode} 
-              language={language} 
-              userStats={userStats}
-              onAddFriend={handleAddFriend}
-            />
-          )}
-          
-          {currentScreen === 'settings' && (
-            <Settings 
-              wpm={wpm} 
-              onWpmChange={setWpm} 
-              isDarkMode={isDarkMode} 
-              onToggleTheme={() => setIsDarkMode(!isDarkMode)} 
-              language={language}
-              onLanguageChange={setLanguage}
-              onLogout={() => setUser(null)} 
-              isStrictMode={userStats.isStrictMode}
-              hasSeenWarning={userStats.hasSeenStrictModeWarning}
-              onToggleStrictMode={handleToggleStrictMode}
-            />
-          )}
-
-          {currentScreen === 'achievements' && <AchievementsGallery achievements={ACHIEVEMENTS_DATA} onBack={() => navigate('profile')} isDarkMode={isDarkMode} language={language} />}
         </div>
       </Layout>
     </div>
   );
 };
+
+const BenefitItem = ({ icon, title, isDarkMode }: { icon: React.ReactNode, title: string, isDarkMode: boolean }) => (
+    <div className={`flex items-center gap-4 p-4 rounded-3xl border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+        <div className="text-amber-500 shrink-0">
+            {icon}
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-widest leading-none">{title}</span>
+    </div>
+);
 
 export default App;

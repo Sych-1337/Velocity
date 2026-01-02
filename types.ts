@@ -51,6 +51,7 @@ export interface UserStats {
   hasSeenStrictModeWarning: boolean;
   idCode: string;
   friendCodes: string[];
+  favorites: string[];
   hasAcceptedCommunityRules: boolean;
 }
 
