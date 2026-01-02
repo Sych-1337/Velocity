@@ -1,0 +1,11 @@
+
+{
+  "users": [
+    { "id": "u1", "name": "SpeedDemon", "code": "12345", "points": 42100, "wpm": 850, "avatar": "SD" },
+    { "id": "u2", "name": "LibraryGhost", "code": "54321", "points": 38500, "wpm": 720, "avatar": "LG" },
+    { "id": "u3", "name": "ReadFastDieYoung", "code": "99887", "points": 35000, "wpm": 910, "avatar": "RF" },
+    { "id": "u4", "name": "BookWorm99", "code": "11223", "points": 29800, "wpm": 540, "avatar": "BW" },
+    { "id": "u5", "name": "FastThinker", "code": "44556", "points": 25000, "wpm": 600, "avatar": "FT" },
+    { "id": "u6", "name": "NeuroHacker", "code": "00001", "points": 50000, "wpm": 1200, "avatar": "NH" }
+  ]
+}

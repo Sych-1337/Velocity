@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { TextItem } from '../types';
-import { ArrowBigUp, ArrowBigDown, Plus, MessageSquare, User, Filter, Rocket } from 'lucide-react';
+import { TextItem, Language } from '../types';
+import { TRANSLATIONS } from '../translations';
+import { ArrowBigUp, ArrowBigDown, Plus, MessageSquare, User, Filter, Rocket, ShieldAlert, CheckCircle, Info } from 'lucide-react';
 
 interface CommunityProps {
   texts: TextItem[];
@@ -9,12 +10,31 @@ interface CommunityProps {
   onVote: (id: string, direction: 'up' | 'down') => void;
   onAdd: (text: Partial<TextItem>) => void;
   isDarkMode: boolean;
+  language: Language;
+  hasAcceptedRules: boolean;
+  onAcceptRules: () => void;
 }
 
-export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, onAdd, isDarkMode }) => {
+export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, onAdd, isDarkMode, language, hasAcceptedRules, onAcceptRules }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const t = TRANSLATIONS[language];
+
+  const handleShareClick = () => {
+    if (!hasAcceptedRules) {
+      setShowRulesModal(true);
+    } else {
+      setIsAdding(true);
+    }
+  };
+
+  const handleAcceptRulesAndProceed = () => {
+    onAcceptRules();
+    setShowRulesModal(false);
+    setIsAdding(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,18 +51,18 @@ export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, o
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <h2 className={`text-4xl font-black italic tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-            COMMUNITY HUB
+            {t.communityHubTitle}
           </h2>
           <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'} font-medium`}>
-            Explore and rate training modules curated by the collective.
+            {t.communityHubDesc}
           </p>
         </div>
         
         <button 
-          onClick={() => setIsAdding(true)}
+          onClick={handleShareClick}
           className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-[28px] font-black shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all"
         >
-          <Plus size={20} /> SHARE KNOWLEDGE
+          <Plus size={20} /> {t.shareKnowledge}
         </button>
       </div>
 
@@ -56,7 +76,6 @@ export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, o
                 : 'bg-white border-slate-200 shadow-xl shadow-slate-200/20'
             }`}
           >
-            {/* Voting Column */}
             <div className="flex flex-col items-center gap-1">
               <button 
                 onClick={() => onVote(text.id, 'up')}
@@ -79,7 +98,6 @@ export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, o
               </button>
             </div>
 
-            {/* Content Column */}
             <div className="flex-1 space-y-4">
               <div className="flex justify-between items-start">
                 <div 
@@ -114,7 +132,7 @@ export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, o
                     isDarkMode ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
                   }`}
                 >
-                  <Rocket size={14} /> Start Training
+                  <Rocket size={14} /> {t.startTraining}
                 </button>
               </div>
             </div>
@@ -122,19 +140,79 @@ export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, o
         ))}
       </div>
 
+      {showRulesModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-2xl animate-in fade-in zoom-in duration-300">
+           <div className={`w-full max-w-xl p-8 md:p-12 rounded-[48px] space-y-8 shadow-2xl relative overflow-hidden border-4 ${isDarkMode ? 'bg-slate-900 border-indigo-600/30' : 'bg-white border-indigo-100'}`}>
+              <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                <ShieldAlert size={160} />
+              </div>
+              
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-3xl flex items-center justify-center animate-pulse">
+                  <ShieldAlert size={40} />
+                </div>
+                
+                <div className="space-y-3">
+                  <h3 className={`text-2xl md:text-3xl font-black italic tracking-tighter uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {t.safetyProtocolTitle}
+                  </h3>
+                  <p className="text-rose-500 font-black uppercase tracking-widest text-[10px]">{t.safetyProtocolHeader}</p>
+                </div>
+
+                <div className={`w-full p-6 rounded-[32px] text-left space-y-4 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                  <div className="flex items-start gap-4">
+                    <CheckCircle className="text-emerald-500 shrink-0 mt-1" size={18} />
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.safetyRule1}</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <CheckCircle className="text-emerald-500 shrink-0 mt-1" size={18} />
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.safetyRule2}</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <CheckCircle className="text-emerald-500 shrink-0 mt-1" size={18} />
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.safetyRule3}</p>
+                  </div>
+                </div>
+
+                <div className={`p-4 rounded-2xl border-2 border-rose-500/20 bg-rose-500/5 text-rose-500 text-xs font-bold leading-relaxed`}>
+                  {t.safetyWarning}
+                </div>
+
+                <div className="w-full flex flex-col gap-3">
+                  <button 
+                    onClick={handleAcceptRulesAndProceed}
+                    className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all active:scale-95"
+                  >
+                    {t.acceptProtocol}
+                  </button>
+                  <button 
+                    onClick={() => setShowRulesModal(false)}
+                    className={`w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity ${isDarkMode ? 'text-white' : 'text-slate-900'}`}
+                  >
+                    {t.cancel}
+                  </button>
+                </div>
+              </div>
+           </div>
+        </div>
+      )}
+
       {isAdding && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in zoom-in duration-300">
           <div className={`w-full max-w-2xl p-8 rounded-[48px] space-y-8 shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
             <div className="flex justify-between items-center">
-              <h3 className="text-3xl font-black italic tracking-tighter">PUBLISH DATA</h3>
+              <div className="flex items-center gap-3">
+                <Rocket className="text-indigo-500" />
+                <h3 className="text-3xl font-black italic tracking-tighter uppercase">{t.publishData}</h3>
+              </div>
               <button onClick={() => setIsAdding(false)} className="p-3 rounded-2xl hover:bg-rose-500/10 text-rose-500 transition-colors">
-                Cancel
+                {t.cancel}
               </button>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Protocol Title</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t.protocolTitle}</label>
                 <input 
                   autoFocus
                   className={`w-full p-6 rounded-[28px] border-2 outline-none font-bold transition-all focus:border-indigo-500 ${
@@ -147,22 +225,27 @@ export const Community: React.FC<CommunityProps> = ({ texts, onSelect, onVote, o
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Data Stream (Content)</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t.dataStream}</label>
                 <textarea 
                   className={`w-full h-48 p-6 rounded-[28px] border-2 outline-none font-medium transition-all focus:border-indigo-500 leading-relaxed ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'
                   }`}
-                  placeholder="Paste your text here... (Min 50 words recommended)"
+                  placeholder="Paste your text here..."
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                 />
+              </div>
+
+              <div className="flex items-center gap-2 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/20">
+                <Info size={14} className="text-indigo-500 shrink-0" />
+                <p className="text-[9px] font-bold text-slate-500 uppercase leading-none">Your content will be reviewed by the system before listing.</p>
               </div>
 
               <button 
                 type="submit"
                 className="w-full bg-indigo-600 text-white py-6 rounded-[28px] font-black text-xl hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-all active:scale-95"
               >
-                INITIATE UPLOAD
+                {t.initiateUpload}
               </button>
             </form>
           </div>

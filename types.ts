@@ -1,17 +1,32 @@
 
 export type Category = 'philosophy' | 'business' | 'fiction' | 'motivation' | 'random' | 'custom' | 'community';
 
+export type Language = 'en' | 'es' | 'ru' | 'uk';
+
+export type DifficultyLevel = 
+  | 'Noob' 
+  | 'Rookie' 
+  | 'Apprentice' 
+  | 'Competent' 
+  | 'Skilled' 
+  | 'Advanced' 
+  | 'Expert' 
+  | 'Master' 
+  | 'Elite' 
+  | 'Legendary';
+
 export interface TextItem {
   id: string;
   title: string;
   category: Category;
   content: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: DifficultyLevel;
   length: 'short' | 'medium' | 'long';
   estimatedWpm?: number;
   author?: string;
   votes?: number;
   userVote?: 'up' | 'down' | null;
+  language: Language;
 }
 
 export interface QuizQuestion {
@@ -29,6 +44,14 @@ export interface UserStats {
   experience: number;
   dailyStreak: number;
   accountLevel: number;
+  language: Language;
+  history: ReadingSession[];
+  isPremium?: boolean;
+  isStrictMode: boolean;
+  hasSeenStrictModeWarning: boolean;
+  idCode: string;
+  friendCodes: string[];
+  hasAcceptedCommunityRules: boolean;
 }
 
 export enum PlayerLevel {
@@ -54,4 +77,6 @@ export interface ReadingSession {
   accuracy: number;
   score: number;
   timestamp: number;
+  category: Category;
+  isStrict?: boolean;
 }
